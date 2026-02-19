@@ -1,0 +1,58 @@
+name: Build Executable
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    runs-on: windows-latest # 可改为 macos-latest 或 ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # 与您的开发版本一致
+          architecture: "x64"
+          cache: "pip"
+          cache-dependency-path: |
+            **/requirements*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt   # 如果有 requirements.txt
+          # 或者直接安装需要的包
+          pip install rembg[cpu] pillow maliang
+
+      - name: Build with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: ./maliang_ui/main.py
+          mode: standalone
+          enable-plugins: tk-inter
+          # 如果还需要其他插件，可添加，如：enable-plugins: tk-inter,multiprocessing
+          include-package: |
+            rembg
+            PIL
+            numpy
+            onnxruntime
+            pymatting          # rembg 可能依赖
+            scipy              # 同上
+          # 如果有额外的数据文件（如模型），可以用 include-data-dir
+          # include-data-dir: |
+          #   models=./models   # 将本地 models 文件夹复制到可执行文件同级
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: RembgApp-Windows
+          path: build/main.dist/**/* # Nuitka 默认输出到 build/脚本名.dist
+          include-hidden-files: true
