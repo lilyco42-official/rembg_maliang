@@ -46,7 +46,7 @@ numpy==2.2.6
     #   scikit-image
     #   scipy
     #   tifffile
-onnxruntime==1.24.1
+onnxruntime==1.23.2
     # via rembg
 packaging==26.0
     # via
