@@ -1,4 +1,4 @@
-name: Build Executable
+name: Package with PyInstaller
 
 on:
   push:
@@ -9,46 +9,16 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest # 您可以根据需要改为 macos-latest 或 ubuntu-latest
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Package Application
+        uses: JackMcKew/pyinstaller-action-windows@main
         with:
-          python-version: "3.12"
-          architecture: "x64"
-          cache: "pip"
-          cache-dependency-path: "**/requirements*.txt"
+          path: maliang_ui # 指向包含 main.py 和 requirements.txt 的文件夹
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r ./maliang_ui/requirements.txt
-
-      - name: Build with Nuitka
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: ./maliang_ui/main.py
-          mode: standalone
-          enable-plugins: tk-inter
-          include-package: |
-            rembg
-            PIL
-            numpy
-            onnxruntime
-            pymatting
-            scipy
-          # 如果需要打包模型文件，取消下一行注释并调整路径
-          # include-data-dir: |
-          #   models=./models
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: RembgApp-Windows
-          path: build/main.dist/**/*
-          include-hidden-files: true
+          path: maliang_ui/dist/windows/ # 默认输出路径
