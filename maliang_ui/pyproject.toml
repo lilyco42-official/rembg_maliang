@@ -1,0 +1,11 @@
+[project]
+name = "maliang-ui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "maliang[opt]>=3.1.5",
+    "pillow>=12.1.1",
+    "rembg[cpu]>=2.0.72",
+]
