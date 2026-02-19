@@ -1,15 +1,30 @@
-name: Build Executable
+name: Build and Release
 
 on:
   push:
     branches: [main]
+    tags: ["v*"] # 匹配以 v 开头的标签，如 v1.0.0
   pull_request:
     branches: [main]
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发
 
 jobs:
   build:
-    runs-on: windows-latest # 使用 Windows 原生环境
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: RembgApp-Windows.exe
+            pyinstaller_args: --onefile
+          - os: ubuntu-latest
+            artifact_name: RembgApp-Linux
+            pyinstaller_args: --onefile
+          - os: macos-latest
+            artifact_name: RembgApp-macOS
+            pyinstaller_args: --onefile
 
     steps:
       - uses: actions/checkout@v4
@@ -20,16 +35,56 @@ jobs:
           python-version: "3.12"
           architecture: "x64"
 
-      - name: Install dependencies
+      # Linux 需要安装 tkinter 系统库
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r maliang_ui/requirements.txt pyinstaller
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --onefile --name RembgApp maliang_ui/main.py
+          pyinstaller ${{ matrix.pyinstaller_args }} --name RembgApp maliang_ui/main.py
+
+      - name: Rename executable (for clarity)
+        run: |
+          mv dist/RembgApp* dist/${{ matrix.artifact_name }}
+        shell: bash
 
       - uses: actions/upload-artifact@v4
         with:
-          name: RembgApp-Windows
-          path: dist/RembgApp.exe
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    # 仅在推送标签时执行
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts/
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
