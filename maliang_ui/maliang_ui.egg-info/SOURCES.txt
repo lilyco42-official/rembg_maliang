@@ -1,0 +1,8 @@
+README.md
+main.py
+pyproject.toml
+maliang_ui.egg-info/PKG-INFO
+maliang_ui.egg-info/SOURCES.txt
+maliang_ui.egg-info/dependency_links.txt
+maliang_ui.egg-info/requires.txt
+maliang_ui.egg-info/top_level.txt
