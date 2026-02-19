@@ -1,7 +1,28 @@
-- name: Package Application
-  uses: JackMcKew/pyinstaller-action-windows@main
-  with:
-    path: maliang_ui
-    python_version: "3.12" # 关键：指定 Python 3.12
-    pypi_url: https://pypi.org/simple/
-    pypi_index_url: https://pypi.org/simple/
+name: Build Executable
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package Application with PyInstaller
+        uses: JackMcKew/pyinstaller-action-windows@main
+        with:
+          path: maliang_ui
+          python_version: "3.12"
+          pypi_url: https://pypi.org/simple/
+          pypi_index_url: https://pypi.org/simple/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RembgApp-Windows
+          path: maliang_ui/dist/windows/
